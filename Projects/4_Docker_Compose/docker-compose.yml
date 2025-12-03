@@ -1,0 +1,30 @@
+version: '3.1'
+
+services:
+  mysql_container:
+    image: mysql:8.0
+    container_name: mysql_container
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+    environment:
+      MYSQL_ROOT_PASSWORD: demopassword
+      MYSQL_DATABASE: demodb
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p$${MYSQL_ROOT_PASSWORD}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./MySQL/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  flask_container:
+    build: Flask/.    
+    container_name: flask_container
+    restart: always
+    depends_on:
+      mysql_container:
+        condition: service_healthy
+    ports:
+      - "5000:5000"  
